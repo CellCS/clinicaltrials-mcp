@@ -1,0 +1,43 @@
+.venv/
+**/.venv/
+**/venv/
+.git/
+.DS_Store
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+ENV/
+build/
+dist/
+*.egg-info/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.uv/
+uv.lock
+
+# Python virtual environments
+app/.venv/
+
+# Python cache
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+
+# Git
+.git/
+.gitignore
+
+# Editor / OS junk
+.DS_Store
+.vscode/
+.idea/
+
+# Tests & local artifacts (optional)
+**/.pytest_cache/
+**/.mypy_cache/
+
