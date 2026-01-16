@@ -741,5 +741,75 @@ def search_international_studies(condition: Optional[str] = None, excludeCountry
         "internationalStudies": results
     }, indent=2)
 
+@mcp.tool()
+def get_version() -> str:
+    """Get API and data version information."""
+    data = make_request('/version', {})
+    return json.dumps(data, indent=2)
+
+@mcp.tool()
+def get_data_model_fields(includeIndexedOnly: bool = False, includeHistoricOnly: bool = False) -> str:
+    """
+    Returns study data model fields.
+    
+    Args:
+        includeIndexedOnly: Include indexed-only fields
+        includeHistoricOnly: Include fields available only in historic data
+    """
+    params = {}
+    if includeIndexedOnly: params['includeIndexedOnly'] = 'true'
+    if includeHistoricOnly: params['includeHistoricOnly'] = 'true'
+    
+    data = make_request('/studies/metadata', params)
+    return json.dumps(data, indent=2)
+
+@mcp.tool()
+def get_search_areas() -> str:
+    """Returns Search Docs and their Search Areas."""
+    data = make_request('/studies/search-areas', {})
+    return json.dumps(data, indent=2)
+
+@mcp.tool()
+def get_enums() -> str:
+    """Returns enumeration types and their values."""
+    data = make_request('/studies/enums', {})
+    return json.dumps(data, indent=2)
+
+@mcp.tool()
+def get_study_size_stats() -> str:
+    """Returns statistics of study JSON sizes."""
+    data = make_request('/stats/size', {})
+    return json.dumps(data, indent=2)
+
+@mcp.tool()
+def get_field_values_stats(types: Optional[str] = None, fields: Optional[str] = None) -> str:
+    """
+    Returns value statistics of the study leaf fields.
+    
+    Args:
+        types: Comma-separated list of field types (e.g., 'ENUM,BOOLEAN')
+        fields: Comma-separated list of fields to return
+    """
+    params = {}
+    if types: params['types'] = types.replace(',', '|')
+    if fields: params['fields'] = fields.replace(',', '|')
+    
+    data = make_request('/stats/field/values', params)
+    return json.dumps(data, indent=2)
+
+@mcp.tool()
+def get_field_size_stats(fields: Optional[str] = None) -> str:
+    """
+    Returns sizes of list/array fields.
+    
+    Args:
+        fields: Comma-separated list of fields to return
+    """
+    params = {}
+    if fields: params['fields'] = fields.replace(',', '|')
+    
+    data = make_request('/stats/field/sizes', params)
+    return json.dumps(data, indent=2)
+
 if __name__ == "__main__":
     mcp.run()

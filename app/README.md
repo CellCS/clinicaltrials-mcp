@@ -21,6 +21,13 @@ This is a Python implementation of the clincial trials MCP server, providing too
 15. `search_by_eligibility_criteria`: Advanced search based on eligibility criteria.
 16. `get_study_timeline`: Get timeline information for studies.
 17. `search_international_studies`: Find multi-country international clinical trials.
+18. `get_version`: Get API and data version information.
+19. `get_data_model_fields`: Returns study data model fields.
+20. `get_search_areas`: Returns Search Docs and their Search Areas.
+21. `get_enums`: Returns enumeration types and their values.
+22. `get_study_size_stats`: Returns statistics of study JSON sizes.
+23. `get_field_values_stats`: Returns value statistics of the study leaf fields.
+24. `get_field_size_stats`: Returns sizes of list/array fields.
 
 ## API Limits
 
