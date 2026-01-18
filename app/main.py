@@ -1,14 +1,14 @@
+import fcntl
+import os
 from typing import Optional, List, Dict, Any
 import json
 import time
-from collections import deque
 import requests
 from fastmcp import FastMCP
 
 # Initialize FastMCP server
 mcp = FastMCP("clinicaltrials-mcp-server", version="1.0.0")
 
-# Base URL for Clinical Trials API
 # Base URL for Clinical Trials API
 # Documentation: https://clinicaltrials.gov/data-api/api
 API_BASE_URL = 'https://clinicaltrials.gov/api/v2'
@@ -25,34 +25,62 @@ session.headers.update(HEADERS)
 
 PAGE_SIZE_CONFIG = 1000
 
-# Rate limiting: 100 requests per 60 seconds
-request_timestamps = deque()
+# Global Rate Limiting using File Locking
+RATE_LIMIT_FILE = 'rate_limit.json'
 
 def make_request(endpoint: str, params: Dict[str, Any]) -> Dict[str, Any]:
     """
     Helper to make synchronous requests to Clinical Trials API.
-    Handles rate limiting and consistent headers.
+    Handles global rate limiting using file-based locking and consistent headers.
     """
-    global request_timestamps
     
-    # Prune timestamps older than 60 seconds
-    current_time = time.time()
-    while request_timestamps and current_time - request_timestamps[0] > 60:
-        request_timestamps.popleft()
+    # Global Rate Limiting Logic
+    # We use a lock file to ensure only one process checks/updates the timestamps at a time
+    with open(RATE_LIMIT_FILE, 'a+') as f:
+        # Acquire exclusive lock - this blocks if another process holds it
+        fcntl.flock(f, fcntl.LOCK_EX)
         
-    # Rate limiting: max 100 requests per 60 seconds
-    if len(request_timestamps) >= 100:
-        # Wait until the oldest request expires
-        wait_time = 60 - (current_time - request_timestamps[0])
-        if wait_time > 0:
-            time.sleep(wait_time)
-            # Re-prune after waiting
+        try:
+            # Read current state
+            f.seek(0)
+            try:
+                content = f.read()
+                data = json.loads(content) if content else {"timestamps": []}
+            except json.JSONDecodeError:
+                data = {"timestamps": []}
+            
+            timestamps = data.get("timestamps", [])
             current_time = time.time()
-            while request_timestamps and current_time - request_timestamps[0] > 60:
-                request_timestamps.popleft()
+            
+            # 1. Prune old timestamps (> 60s ago)
+            timestamps = [t for t in timestamps if current_time - t <= 60]
+            
+            # 2. Rate Limit Enforced (limit 100)
+            if len(timestamps) >= 100:
+                oldest_timestamp = timestamps[0]
+                wait_time = 60 - (current_time - oldest_timestamp)
+                
+                if wait_time > 0:
+                    time.sleep(wait_time)
+                    # Recalculate current time and re-prune after waiting
+                    current_time = time.time()
+                    timestamps = [t for t in timestamps if current_time - t <= 60]
+            
+            # 3. Add new timestamp
+            timestamps.append(time.time())
+            
+            # 4. Write back to file
+            f.seek(0)
+            f.truncate()
+            json.dump({"timestamps": timestamps}, f)
+            f.flush()
+            os.fsync(f.fileno())  # Ensure write hits disk
+            
+        finally:
+            # Always release lock
+            fcntl.flock(f, fcntl.LOCK_UN)
     
-    # Add current timestamp
-    request_timestamps.append(time.time())
+    # ... rest of request logic ...
 
     try:
         # Use session for connection pooling
@@ -233,13 +261,28 @@ def search_by_location(
     city: Optional[str] = None,
     facilityName: Optional[str] = None,
     distance: Optional[int] = None,
+    location: Optional[str] = None,
+    task_progress: Optional[str] = None,
     pageSize: int = PAGE_SIZE_CONFIG
 ) -> str:
-    """Find clinical trials by geographic location."""
+    """
+    Find clinical trials by geographic location.
+    
+    Args:
+        country: Country name
+        state: State or province
+        city: City name
+        facilityName: Name of the facility
+        distance: Distance in miles (radius) from city/location
+        location: General location string (e.g. "Nigeria", "Boston, MA")
+        task_progress: (Ignored) Context parameter
+        pageSize: Number of results to return
+    """
     # Use query.locn for location search which supports various location types
     # filter.distance allows searching within a radius if city/coords are provided
     params = {}
     location_parts = []
+    if location: location_parts.append(location)
     if country: location_parts.append(country)
     if state: location_parts.append(state)
     if city: location_parts.append(city)
@@ -247,7 +290,7 @@ def search_by_location(
     
     location_query = ", ".join(location_parts)
     if location_query: params['query.locn'] = location_query
-    if distance and city: params['filter.distance'] = distance
+    if distance and (city or location): params['filter.distance'] = distance
         
     data = fetch_studies('/studies', params, pageSize)
     studies = data.get("studies", [])

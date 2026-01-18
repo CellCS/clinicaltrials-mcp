@@ -22,14 +22,13 @@ uv sync
 
 ### Run the Application Locally
 
-To run the server:
+To run the server for development:
 ```bash
 uv run python app/main.py
 ```
 
-### Test the Application Locally
-
 ### setup MCP server in AI IDE or Cline
+
 
 ```json
     "ClinicalTrials-MCP": {
@@ -60,75 +59,16 @@ The virtual environment (`.venv`) is excluded from the Docker build via `.docker
 
 ```bash
 docker build -f Dockerfile -t clinicaltrials-mcp .
-```
 
-### Run with Docker Compose
-
-```bash
 docker-compose up -d
+
 ```
 
-### Stop with Docker Compose
+## Agnet Skills
 
-```bash
-docker-compose down
-``` 
+at /skills directory  
 
-### Stop with Docker Compose and remove volumes
-
-```bash
-docker-compose down --volumes
-``` 
-
-### Remove Image
-
-```bash
-docker rmi clinicaltrials-mcp
-``` 
-
-### Remove Image and Volumes
-
-```bash
-docker rmi clinicaltrials-mcp --volumes
-```     
-
-### Remove All Unused Docker Objects
-
-```bash
-docker system prune -a
-```     
-
-### Remove All Unused Docker Objects and Volumes
-
-```bash
-docker system prune -a --volumes
-```     
-
-### Remove All Unused Docker Objects and Volumes and Images
-
-```bash
-docker system prune -a --volumes --all
-```
-
-
-### setup MCP server in Cline
-
-```json
-    "ClinicalTrial-MCP": {
-      "autoApprove": [
-        "search_by_location"
-      ],
-      "disabled": false,
-      "timeout": 60,
-      "type": "stdio",
-      "command": "uv",
-      "args": [
-        "run",
-        "main.py"
-      ],
-      "cwd": "/Users/{username}/clinicaltrials-mcp/app"
-    }
-```
+[clinicaltrials-database](https://skillsmp.com/skills/davila7-claude-code-templates-cli-tool-components-skills-scientific-clinicaltrials-database-skill-md): Query ClinicalTrials.gov via API v2. Search trials by condition, drug, location, status, or phase. Retrieve trial details by NCT ID, export data, for clinical research and patient matching.
 
 
 ## 📂 Project Structure
@@ -137,3 +77,30 @@ docker system prune -a --volumes --all
 - `.venv/`: Root virtual environment (locally managed).
 - `Dockerfile`: Container configuration.
 - `docker-compose.yml`: Multi-container orchestration.
+- `skills/`: Skills directory.
+
+## Response Example
+
+```json
+{
+    "studies": [
+        {
+            "nctId": "NCT00000100",
+            "title": "A Phase I Trial of a New Drug",
+            "status": "Recruiting",
+            "phase": ["Phase 1"],
+            "studyType": "Interventional",
+            "sponsor": "Acme Pharmaceuticals",
+            "conditions": ["Cancer", "Asthma"],
+            "startDate": "2023-01-01"
+        }
+    ],
+    "totalCount": 1
+}
+```
+
+## References
+
+- [ClinicalTrials.gov API Documentation](https://clinicaltrials.gov/data-api/api)
+- [FastMCP Documentation](https://gofastmcp.com/getting-started/welcome)
+- [SkillsMP online marketplace for discovering and using pre-built "Skills"](https://skillsmp.com)
