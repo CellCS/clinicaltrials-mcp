@@ -1,0 +1,13 @@
+[project]
+name = "clinicaltrials-mcp"
+version = "1.0.0"
+description = "A Model Context Protocol server for ClinicalTrials.gov data"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastmcp>=2.14.3,<3.0",
+    "requests>=2.32.5",
+]
+
+[project.scripts]
+clinicaltrials-mcp = "main:mcp.run"
